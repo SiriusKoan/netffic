@@ -1,27 +1,31 @@
 #include "CLI/CLI.hpp"
-#include "IPv4Layer.h"
-#include "Packet.h"
-#include "PcapLiveDeviceList.h"
-#include "SystemUtils.h"
 #include "monitor.hpp"
+#include "pcapplusplus/IPv4Layer.h"
+#include "pcapplusplus/Packet.h"
+#include "pcapplusplus/PcapLiveDeviceList.h"
+#include "pcapplusplus/SystemUtils.h"
 #include <chrono>
+#include <csignal>
 #include <format>
 #include <iostream>
-#include <signal.h>
 #include <thread>
 
-pcpp::PcapLiveDevice *dev;
-PacketStatsCollector *collector;
+pcpp::PcapLiveDevice *dev = nullptr;
+PacketStatsCollector *collector = nullptr;
 
-void signalHandler(__attribute__((unused)) int signum) {
+void finalize() {
     std::cout << "Stopping capture..." << std::endl;
-    dev->stopCapture();
-    std::cout << "Printing results..." << std::endl;
-    if (collector != nullptr) {
-        collector->printResult();
-    } else {
-        std::cerr << "No collector found" << std::endl;
+    if (dev != nullptr) {
+        dev->stopCapture();
+        dev->close();
     }
+    if (collector != nullptr) {
+        delete collector;
+    }
+}
+
+void signalHandler(int) {
+    finalize();
     exit(0);
 }
 
@@ -56,9 +60,7 @@ int main(int argc, char *argv[]) {
 
     collector = new PacketStatsCollector();
     dev->startCapture(
-        [](pcpp::RawPacket *packet,
-           __attribute__((unused)) pcpp::PcapLiveDevice *dev,
-           __attribute__((unused)) void *cookie) {
+        [](pcpp::RawPacket *packet, pcpp::PcapLiveDevice *, void *) {
             pcpp::Packet parsedPacket(packet);
             collector->consumePacket(parsedPacket);
             usleep(DELAY);
@@ -66,7 +68,6 @@ int main(int argc, char *argv[]) {
         nullptr);
     std::this_thread::sleep_until(
         std::chrono::time_point<std::chrono::system_clock>::max());
-    dev->stopCapture();
-    collector->printResult();
+    finalize();
     return 0;
 }
