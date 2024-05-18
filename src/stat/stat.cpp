@@ -1,9 +1,9 @@
 #include "nlohmann/json.hpp"
+#include "utils.hpp"
 #include <iostream>
 #include <string>
-#include "utils.hpp"
 
-nlohmann::json getAllStats(PacketStats& stats) {
+nlohmann::json getAllStats(PacketStats &stats) {
     nlohmann::json j;
     j["totalPacketCount"] = stats.totalPacketCount;
     j["l3"] = {
@@ -30,68 +30,68 @@ nlohmann::json getAllStats(PacketStats& stats) {
     return j;
 }
 
-nlohmann::json getIPv4Stats(IPv4Stats& stats) {
+nlohmann::json getIPv4Stats(IPv4Stats &stats) {
     nlohmann::json j;
     j["srcIpCounter"] = stats.srcIpCounter;
     j["dstIpCounter"] = stats.dstIpCounter;
     return j;
 }
 
-nlohmann::json getIPv6Stats(IPv6Stats& stats) {
+nlohmann::json getIPv6Stats(IPv6Stats &stats) {
     nlohmann::json j;
     j["srcIpCounter"] = stats.srcIpCounter;
     j["dstIpCounter"] = stats.dstIpCounter;
     return j;
 }
 
-nlohmann::json getTCPStats(TCPStats& stats) {
+nlohmann::json getTCPStats(TCPStats &stats) {
     nlohmann::json j;
     j["srcPortCounter"] = {};
-    for (auto& [key, value] : stats.srcPortCounter) {
+    for (auto &[key, value] : stats.srcPortCounter) {
         j["srcPortCounter"][key] = value;
     }
     j["dstPortCounter"] = {};
-    for (auto& [key, value] : stats.dstPortCounter) {
+    for (auto &[key, value] : stats.dstPortCounter) {
         j["dstPortCounter"][key] = value;
     }
     return j;
 }
 
-nlohmann::json getUDPStats(UDPStats& stats) {
+nlohmann::json getUDPStats(UDPStats &stats) {
     nlohmann::json j;
     j["srcPortCounter"] = {};
-    for (auto& [key, value] : stats.srcPortCounter) {
+    for (auto &[key, value] : stats.srcPortCounter) {
         j["srcPortCounter"][key] = value;
     }
     j["dstPortCounter"] = {};
-    for (auto& [key, value] : stats.dstPortCounter) {
+    for (auto &[key, value] : stats.dstPortCounter) {
         j["dstPortCounter"][key] = value;
     }
     return j;
 }
 
-nlohmann::json getHTTPStats(HTTPStats& stats) {
+nlohmann::json getHTTPStats(HTTPStats &stats) {
     nlohmann::json j;
     j["requestCount"] = stats.requestCount;
     j["responseCount"] = stats.responseCount;
     j["methodCounter"] = {};
-    for (auto& [key, value] : stats.methodCounter) {
+    for (auto &[key, value] : stats.methodCounter) {
         j["methodCounter"][key] = value;
     }
     j["statusCounter"] = {};
-    for (auto& [key, value] : stats.statusCounter) {
+    for (auto &[key, value] : stats.statusCounter) {
         j["statusCounter"][std::to_string(key)] = value;
     }
     j["userAgentCounter"] = {};
-    for (auto& [key, value] : stats.userAgentCounter) {
+    for (auto &[key, value] : stats.userAgentCounter) {
         j["userAgentCounter"][key] = value;
     }
     j["hostCounter"] = {};
-    for (auto& [key, value] : stats.hostCounter) {
+    for (auto &[key, value] : stats.hostCounter) {
         j["hostCounter"][key] = value;
     }
     j["contentTypeCounter"] = {};
-    for (auto& [key, value] : stats.contentTypeCounter) {
+    for (auto &[key, value] : stats.contentTypeCounter) {
         j["contentTypeCounter"][key] = value;
     }
     return j;

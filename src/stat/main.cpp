@@ -1,27 +1,27 @@
+#include "httplib.h"
+#include "nlohmann/json.hpp"
 #include "pcapplusplus/ArpLayer.h"
-#include "pcapplusplus/IcmpLayer.h"
 #include "pcapplusplus/HttpLayer.h"
 #include "pcapplusplus/IPv4Layer.h"
 #include "pcapplusplus/IPv6Layer.h"
+#include "pcapplusplus/IcmpLayer.h"
 #include "pcapplusplus/Packet.h"
 #include "pcapplusplus/PcapFileDevice.h"
 #include "pcapplusplus/PcapLiveDeviceList.h"
 #include "pcapplusplus/RawPacket.h"
 #include "pcapplusplus/TcpLayer.h"
 #include "pcapplusplus/UdpLayer.h"
-#include "httplib.h"
-#include "nlohmann/json.hpp"
-#include "utils.hpp"
 #include "stat.hpp"
+#include "utils.hpp"
 #include <algorithm>
 #include <fcntl.h>
 #include <iostream>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <thread>
 #include <unistd.h>
 #include <unordered_map>
 #include <vector>
-#include <sys/stat.h>
-#include <sys/types.h>
 
 PacketStats stats = {};
 IPv4Stats ipv4Stats = {};
@@ -102,7 +102,8 @@ void receive_data() {
         if (packet.isPacketOfType(pcpp::HTTP)) {
             stats.httpPacketCount++;
             if (packet.isPacketOfType(pcpp::HTTPRequest)) {
-                auto httpLayer = packet.getLayerOfType<pcpp::HttpRequestLayer>();
+                auto httpLayer =
+                    packet.getLayerOfType<pcpp::HttpRequestLayer>();
                 httpStats.requestCount++;
                 auto method = httpLayer->getFirstLine()->getMethod();
                 if (method == pcpp::HttpRequestLayer::HttpGET) {
@@ -126,13 +127,22 @@ void receive_data() {
                 } else {
                     httpStats.methodCounter["UNKNOWN"]++;
                 }
-                httpStats.userAgentCounter[httpLayer->getFieldByName(PCPP_HTTP_USER_AGENT_FIELD)->getFieldValue()]++;
-                httpStats.hostCounter[httpLayer->getFieldByName(PCPP_HTTP_HOST_FIELD)->getFieldValue()]++;
+                httpStats.userAgentCounter[httpLayer
+                                               ->getFieldByName(
+                                                   PCPP_HTTP_USER_AGENT_FIELD)
+                                               ->getFieldValue()]++;
+                httpStats
+                    .hostCounter[httpLayer->getFieldByName(PCPP_HTTP_HOST_FIELD)
+                                     ->getFieldValue()]++;
             } else if (packet.isPacketOfType(pcpp::HTTPResponse)) {
-                auto httpLayer = packet.getLayerOfType<pcpp::HttpResponseLayer>();
+                auto httpLayer =
+                    packet.getLayerOfType<pcpp::HttpResponseLayer>();
                 httpStats.responseCount++;
-                httpStats.statusCounter[httpLayer->getFirstLine()->getStatusCode()]++;
-                httpStats.contentTypeCounter[httpLayer->getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue()]++;
+                httpStats.statusCounter[httpLayer->getFirstLine()
+                                            ->getStatusCode()]++;
+                httpStats.contentTypeCounter
+                    [httpLayer->getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)
+                         ->getFieldValue()]++;
             }
         }
         if (packet.isPacketOfType(pcpp::NTP)) {
@@ -154,21 +164,24 @@ void http_server(std::string addr, int port) {
     svr.Get("/stats/all", [](const httplib::Request &, httplib::Response &res) {
         res.set_content(getAllStats(stats).dump(), "application/json");
     });
-    svr.Get("/stats/ipv4", [](const httplib::Request &, httplib::Response &res) {
-        res.set_content(getIPv4Stats(ipv4Stats).dump(), "application/json");
-    });
-    svr.Get("/stats/ipv6", [](const httplib::Request &, httplib::Response &res) {
-        res.set_content(getIPv6Stats(ipv6Stats).dump(), "application/json");
-    });
+    svr.Get(
+        "/stats/ipv4", [](const httplib::Request &, httplib::Response &res) {
+            res.set_content(getIPv4Stats(ipv4Stats).dump(), "application/json");
+        });
+    svr.Get(
+        "/stats/ipv6", [](const httplib::Request &, httplib::Response &res) {
+            res.set_content(getIPv6Stats(ipv6Stats).dump(), "application/json");
+        });
     svr.Get("/stats/tcp", [](const httplib::Request &, httplib::Response &res) {
         res.set_content(getTCPStats(tcpStats).dump(), "application/json");
     });
     svr.Get("/stats/udp", [](const httplib::Request &, httplib::Response &res) {
         res.set_content(getUDPStats(udpStats).dump(), "application/json");
     });
-    svr.Get("/stats/http", [](const httplib::Request &, httplib::Response &res) {
-        res.set_content(getHTTPStats(httpStats).dump(), "application/json");
-    });
+    svr.Get(
+        "/stats/http", [](const httplib::Request &, httplib::Response &res) {
+            res.set_content(getHTTPStats(httpStats).dump(), "application/json");
+        });
     svr.listen(addr.c_str(), port);
 }
 
