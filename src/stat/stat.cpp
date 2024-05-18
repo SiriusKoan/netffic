@@ -46,6 +46,8 @@ nlohmann::json getIPv6Stats(IPv6Stats& stats) {
 
 nlohmann::json getHTTPStats(HTTPStats& stats) {
     nlohmann::json j;
+    j["requestCount"] = stats.requestCount;
+    j["responseCount"] = stats.responseCount;
     j["methodCounter"] = {};
     for (auto& [key, value] : stats.methodCounter) {
         j["methodCounter"][key] = value;
@@ -53,6 +55,18 @@ nlohmann::json getHTTPStats(HTTPStats& stats) {
     j["statusCounter"] = {};
     for (auto& [key, value] : stats.statusCounter) {
         j["statusCounter"][std::to_string(key)] = value;
+    }
+    j["userAgentCounter"] = {};
+    for (auto& [key, value] : stats.userAgentCounter) {
+        j["userAgentCounter"][key] = value;
+    }
+    j["hostCounter"] = {};
+    for (auto& [key, value] : stats.hostCounter) {
+        j["hostCounter"][key] = value;
+    }
+    j["contentTypeCounter"] = {};
+    for (auto& [key, value] : stats.contentTypeCounter) {
+        j["contentTypeCounter"][key] = value;
     }
     return j;
 }

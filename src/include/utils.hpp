@@ -60,6 +60,11 @@ typedef struct {
 } IPv6Stats;
 
 typedef struct {
+    int requestCount;
+    int responseCount;
     std::unordered_map<std::string, int> methodCounter;
     std::unordered_map<int, int> statusCounter;
+    std::unordered_map<std::string, int> userAgentCounter;
+    std::unordered_map<std::string, int> hostCounter;
+    std::unordered_map<std::string, int> contentTypeCounter;
 } HTTPStats;

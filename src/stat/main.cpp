@@ -1,4 +1,5 @@
 #include "pcapplusplus/ArpLayer.h"
+#include "pcapplusplus/IcmpLayer.h"
 #include "pcapplusplus/HttpLayer.h"
 #include "pcapplusplus/IPv4Layer.h"
 #include "pcapplusplus/IPv6Layer.h"
@@ -94,6 +95,7 @@ void receive_data() {
             stats.httpPacketCount++;
             if (packet.isPacketOfType(pcpp::HTTPRequest)) {
                 auto httpLayer = packet.getLayerOfType<pcpp::HttpRequestLayer>();
+                httpStats.requestCount++;
                 auto method = httpLayer->getFirstLine()->getMethod();
                 if (method == pcpp::HttpRequestLayer::HttpGET) {
                     httpStats.methodCounter["GET"]++;
@@ -116,9 +118,13 @@ void receive_data() {
                 } else {
                     httpStats.methodCounter["UNKNOWN"]++;
                 }
+                httpStats.userAgentCounter[httpLayer->getFieldByName(PCPP_HTTP_USER_AGENT_FIELD)->getFieldValue()]++;
+                httpStats.hostCounter[httpLayer->getFieldByName(PCPP_HTTP_HOST_FIELD)->getFieldValue()]++;
             } else if (packet.isPacketOfType(pcpp::HTTPResponse)) {
                 auto httpLayer = packet.getLayerOfType<pcpp::HttpResponseLayer>();
+                httpStats.responseCount++;
                 httpStats.statusCounter[httpLayer->getFirstLine()->getStatusCode()]++;
+                httpStats.contentTypeCounter[httpLayer->getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue()]++;
             }
         }
         if (packet.isPacketOfType(pcpp::NTP)) {
