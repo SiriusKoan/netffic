@@ -55,6 +55,11 @@ typedef struct {
 } IPv4Stats;
 
 typedef struct {
-    std::unordered_map<pcpp::HttpRequestLayer::HttpMethod, int> methodCounter;
+    std::unordered_map<std::string, int> srcIpCounter;
+    std::unordered_map<std::string, int> dstIpCounter;
+} IPv6Stats;
+
+typedef struct {
+    std::unordered_map<std::string, int> methodCounter;
     std::unordered_map<int, int> statusCounter;
 } HTTPStats;
