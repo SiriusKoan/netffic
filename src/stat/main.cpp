@@ -26,7 +26,6 @@ PacketStats stats = {};
 IPv4Stats ipv4Stats = {};
 IPv6Stats ipv6Stats = {};
 HTTPStats httpStats = {};
-std::unordered_map<std::string, std::string> ipToPlace;
 
 bool running = true;
 
@@ -39,9 +38,11 @@ void receive_data() {
     }
     pcpp::PcapFileReaderDevice pcapReader(getDataPipePath());
     if (!pcapReader.open()) {
-        std::cerr << "Error opening the pcap file" << std::endl;
+        std::cerr << "Error opening the FIFO" << std::endl;
         return;
     }
+    std::cout << "Pipe opened" << std::endl;
+    std::cout << "Starting packet processing" << std::endl;
     pcpp::RawPacket rawPacket;
     while (running && pcapReader.getNextPacket(rawPacket)) {
         pcpp::Packet packet(&rawPacket);
@@ -131,27 +132,10 @@ void receive_data() {
         }
     }
     std::cout << "Pipe closed" << std::endl;
-    std::cout << "Total packets: " << stats.totalPacketCount << std::endl;
-    std::cout << "IPv4 packets: " << stats.ipv4PacketCount << std::endl;
-    std::cout << "==================== src ====================" << std::endl;
-    std::vector<std::pair<std::string, uint16_t>> srcIpCounterVec(
-        ipv4Stats.srcIpCounter.begin(), ipv4Stats.srcIpCounter.end());
-    std::sort(srcIpCounterVec.begin(), srcIpCounterVec.end(),
-              [](auto const &a, auto const &b) { return a.second > b.second; });
-    for (auto const &[ip, count] : srcIpCounterVec) {
-        std::cout << "from " << ip << " -> " << count << std::endl;
-    }
-    std::cout << "==================== dst ====================" << std::endl;
-    std::vector<std::pair<std::string, uint16_t>> dstIpCounterVec(
-        ipv4Stats.dstIpCounter.begin(), ipv4Stats.dstIpCounter.end());
-    std::sort(dstIpCounterVec.begin(), dstIpCounterVec.end(),
-              [](auto const &a, auto const &b) { return a.second > b.second; });
-    for (auto const &[ip, count] : dstIpCounterVec) {
-        std::cout << "to " << ip << " -> " << count << std::endl;
-    }
 }
 
 void http_server(std::string addr, int port) {
+    std::cout << "Starting HTTP server on " << addr << ":" << port << std::endl;
     httplib::Server svr;
     svr.Get("/stats/all", [](const httplib::Request &, httplib::Response &res) {
         res.set_content(getAllStats(stats).dump(), "application/json");
@@ -179,6 +163,7 @@ int main(int argc, char *argv[]) {
     std::thread t2(http_server, addr, port);
     t1.join();
     // kill t2
+    std::cout << "Stopping HTTP server" << std::endl;
     t2.detach();
     return 0;
 }
