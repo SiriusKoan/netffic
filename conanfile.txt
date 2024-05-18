@@ -3,6 +3,7 @@ cpp-httplib/0.15.3
 gtest/1.14.0
 pcapplusplus/23.09
 cli11/2.4.1
+nlohmann_json/3.11.3
 
 [generators]
 CMakeDeps

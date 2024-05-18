@@ -8,7 +8,10 @@
 #include "pcapplusplus/RawPacket.h"
 #include "pcapplusplus/TcpLayer.h"
 #include "pcapplusplus/UdpLayer.h"
+#include "httplib.h"
+#include "nlohmann/json.hpp"
 #include "utils.hpp"
+#include "stat.hpp"
 #include <algorithm>
 #include <fcntl.h>
 #include <iostream>
@@ -19,9 +22,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-IPv4Stats ipStats = {};
-HTTPStats httpStats = {};
 PacketStats stats = {};
+IPv4Stats ipv4Stats = {};
+IPv6Stats ipv6Stats = {};
+HTTPStats httpStats = {};
 std::unordered_map<std::string, std::string> ipToPlace;
 
 bool running = true;
@@ -56,11 +60,14 @@ void receive_data() {
         if (packet.isPacketOfType(pcpp::IPv4)) {
             stats.ipv4PacketCount++;
             auto ipv4Layer = packet.getLayerOfType<pcpp::IPv4Layer>();
-            ipStats.srcIpCounter[ipv4Layer->getSrcIPAddress().toString()]++;
-            ipStats.dstIpCounter[ipv4Layer->getDstIPAddress().toString()]++;
+            ipv4Stats.srcIpCounter[ipv4Layer->getSrcIPAddress().toString()]++;
+            ipv4Stats.dstIpCounter[ipv4Layer->getDstIPAddress().toString()]++;
         }
         if (packet.isPacketOfType(pcpp::IPv6)) {
             stats.ipv6PacketCount++;
+            auto ipv6Layer = packet.getLayerOfType<pcpp::IPv6Layer>();
+            ipv6Stats.srcIpCounter[ipv6Layer->getSrcIPAddress().toString()]++;
+            ipv6Stats.dstIpCounter[ipv6Layer->getDstIPAddress().toString()]++;
         }
         if (packet.isPacketOfType(pcpp::VRRP)) {
             stats.vrrpPacketCount++;
@@ -86,7 +93,28 @@ void receive_data() {
             stats.httpPacketCount++;
             if (packet.isPacketOfType(pcpp::HTTPRequest)) {
                 auto httpLayer = packet.getLayerOfType<pcpp::HttpRequestLayer>();
-                httpStats.methodCounter[httpLayer->getFirstLine()->getMethod()]++;
+                auto method = httpLayer->getFirstLine()->getMethod();
+                if (method == pcpp::HttpRequestLayer::HttpGET) {
+                    httpStats.methodCounter["GET"]++;
+                } else if (method == pcpp::HttpRequestLayer::HttpPOST) {
+                    httpStats.methodCounter["POST"]++;
+                } else if (method == pcpp::HttpRequestLayer::HttpHEAD) {
+                    httpStats.methodCounter["HEAD"]++;
+                } else if (method == pcpp::HttpRequestLayer::HttpPUT) {
+                    httpStats.methodCounter["PUT"]++;
+                } else if (method == pcpp::HttpRequestLayer::HttpDELETE) {
+                    httpStats.methodCounter["DELETE"]++;
+                } else if (method == pcpp::HttpRequestLayer::HttpOPTIONS) {
+                    httpStats.methodCounter["OPTIONS"]++;
+                } else if (method == pcpp::HttpRequestLayer::HttpTRACE) {
+                    httpStats.methodCounter["TRACE"]++;
+                } else if (method == pcpp::HttpRequestLayer::HttpCONNECT) {
+                    httpStats.methodCounter["CONNECT"]++;
+                } else if (method == pcpp::HttpRequestLayer::HttpPATCH) {
+                    httpStats.methodCounter["PATCH"]++;
+                } else {
+                    httpStats.methodCounter["UNKNOWN"]++;
+                }
             } else if (packet.isPacketOfType(pcpp::HTTPResponse)) {
                 auto httpLayer = packet.getLayerOfType<pcpp::HttpResponseLayer>();
                 httpStats.statusCounter[httpLayer->getFirstLine()->getStatusCode()]++;
@@ -107,7 +135,7 @@ void receive_data() {
     std::cout << "IPv4 packets: " << stats.ipv4PacketCount << std::endl;
     std::cout << "==================== src ====================" << std::endl;
     std::vector<std::pair<std::string, uint16_t>> srcIpCounterVec(
-        ipStats.srcIpCounter.begin(), ipStats.srcIpCounter.end());
+        ipv4Stats.srcIpCounter.begin(), ipv4Stats.srcIpCounter.end());
     std::sort(srcIpCounterVec.begin(), srcIpCounterVec.end(),
               [](auto const &a, auto const &b) { return a.second > b.second; });
     for (auto const &[ip, count] : srcIpCounterVec) {
@@ -115,7 +143,7 @@ void receive_data() {
     }
     std::cout << "==================== dst ====================" << std::endl;
     std::vector<std::pair<std::string, uint16_t>> dstIpCounterVec(
-        ipStats.dstIpCounter.begin(), ipStats.dstIpCounter.end());
+        ipv4Stats.dstIpCounter.begin(), ipv4Stats.dstIpCounter.end());
     std::sort(dstIpCounterVec.begin(), dstIpCounterVec.end(),
               [](auto const &a, auto const &b) { return a.second > b.second; });
     for (auto const &[ip, count] : dstIpCounterVec) {
@@ -123,8 +151,34 @@ void receive_data() {
     }
 }
 
-int main() {
+void http_server(std::string addr, int port) {
+    httplib::Server svr;
+    svr.Get("/stats/all", [](const httplib::Request &, httplib::Response &res) {
+        res.set_content(getAllStats(stats).dump(), "application/json");
+    });
+    svr.Get("/stats/ipv4", [](const httplib::Request &, httplib::Response &res) {
+        res.set_content(getIPv4Stats(ipv4Stats).dump(), "application/json");
+    });
+    svr.Get("/stats/ipv6", [](const httplib::Request &, httplib::Response &res) {
+        res.set_content(getIPv6Stats(ipv6Stats).dump(), "application/json");
+    });
+    svr.Get("/stats/http", [](const httplib::Request &, httplib::Response &res) {
+        res.set_content(getHTTPStats(httpStats).dump(), "application/json");
+    });
+    svr.listen(addr.c_str(), port);
+}
+
+int main(int argc, char *argv[]) {
+    if (argc < 3) {
+        std::cerr << "Usage: " << argv[0] << " <address> <port>" << std::endl;
+        return 1;
+    }
+    std::string addr = argv[1];
+    int port = std::stoi(argv[2]);
     std::thread t1(receive_data);
+    std::thread t2(http_server, addr, port);
     t1.join();
+    // kill t2
+    t2.detach();
     return 0;
 }
