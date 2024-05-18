@@ -44,6 +44,32 @@ nlohmann::json getIPv6Stats(IPv6Stats& stats) {
     return j;
 }
 
+nlohmann::json getTCPStats(TCPStats& stats) {
+    nlohmann::json j;
+    j["srcPortCounter"] = {};
+    for (auto& [key, value] : stats.srcPortCounter) {
+        j["srcPortCounter"][key] = value;
+    }
+    j["dstPortCounter"] = {};
+    for (auto& [key, value] : stats.dstPortCounter) {
+        j["dstPortCounter"][key] = value;
+    }
+    return j;
+}
+
+nlohmann::json getUDPStats(UDPStats& stats) {
+    nlohmann::json j;
+    j["srcPortCounter"] = {};
+    for (auto& [key, value] : stats.srcPortCounter) {
+        j["srcPortCounter"][key] = value;
+    }
+    j["dstPortCounter"] = {};
+    for (auto& [key, value] : stats.dstPortCounter) {
+        j["dstPortCounter"][key] = value;
+    }
+    return j;
+}
+
 nlohmann::json getHTTPStats(HTTPStats& stats) {
     nlohmann::json j;
     j["requestCount"] = stats.requestCount;

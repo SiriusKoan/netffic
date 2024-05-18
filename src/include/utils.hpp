@@ -60,6 +60,16 @@ typedef struct {
 } IPv6Stats;
 
 typedef struct {
+    std::unordered_map<int, int> srcPortCounter;
+    std::unordered_map<int, int> dstPortCounter;
+} TCPStats;
+
+typedef struct {
+    std::unordered_map<int, int> srcPortCounter;
+    std::unordered_map<int, int> dstPortCounter;
+} UDPStats;
+
+typedef struct {
     int requestCount;
     int responseCount;
     std::unordered_map<std::string, int> methodCounter;

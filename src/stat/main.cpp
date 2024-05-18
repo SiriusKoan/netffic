@@ -26,6 +26,8 @@
 PacketStats stats = {};
 IPv4Stats ipv4Stats = {};
 IPv6Stats ipv6Stats = {};
+TCPStats tcpStats = {};
+UDPStats udpStats = {};
 HTTPStats httpStats = {};
 
 bool running = true;
@@ -77,9 +79,15 @@ void receive_data() {
         // L4
         if (packet.isPacketOfType(pcpp::TCP)) {
             stats.tcpPacketCount++;
+            auto tcpLayer = packet.getLayerOfType<pcpp::TcpLayer>();
+            tcpStats.srcPortCounter[tcpLayer->getSrcPort()]++;
+            tcpStats.dstPortCounter[tcpLayer->getDstPort()]++;
         }
         if (packet.isPacketOfType(pcpp::UDP)) {
             stats.udpPacketCount++;
+            auto udpLayer = packet.getLayerOfType<pcpp::UdpLayer>();
+            udpStats.srcPortCounter[udpLayer->getSrcPort()]++;
+            udpStats.dstPortCounter[udpLayer->getDstPort()]++;
         }
         // L7
         if (packet.isPacketOfType(pcpp::DHCP)) {
@@ -151,6 +159,12 @@ void http_server(std::string addr, int port) {
     });
     svr.Get("/stats/ipv6", [](const httplib::Request &, httplib::Response &res) {
         res.set_content(getIPv6Stats(ipv6Stats).dump(), "application/json");
+    });
+    svr.Get("/stats/tcp", [](const httplib::Request &, httplib::Response &res) {
+        res.set_content(getTCPStats(tcpStats).dump(), "application/json");
+    });
+    svr.Get("/stats/udp", [](const httplib::Request &, httplib::Response &res) {
+        res.set_content(getUDPStats(udpStats).dump(), "application/json");
     });
     svr.Get("/stats/http", [](const httplib::Request &, httplib::Response &res) {
         res.set_content(getHTTPStats(httpStats).dump(), "application/json");
