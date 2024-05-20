@@ -161,25 +161,28 @@ void receive_data() {
 void http_server(std::string addr, int port) {
     std::cout << "Starting HTTP server on " << addr << ":" << port << std::endl;
     httplib::Server svr;
-    svr.Get("/stats/all", [](const httplib::Request &, httplib::Response &res) {
+    svr.Get("/api/meta", [](const httplib::Request &, httplib::Response &res) {
+        res.set_content(getMeta().dump(), "application/json");
+    });
+    svr.Get("/api/stats/all", [](const httplib::Request &, httplib::Response &res) {
         res.set_content(getAllStats(stats).dump(), "application/json");
     });
     svr.Get(
-        "/stats/ipv4", [](const httplib::Request &, httplib::Response &res) {
+        "/api/stats/ipv4", [](const httplib::Request &, httplib::Response &res) {
             res.set_content(getIPv4Stats(ipv4Stats).dump(), "application/json");
         });
     svr.Get(
-        "/stats/ipv6", [](const httplib::Request &, httplib::Response &res) {
+        "/api/stats/ipv6", [](const httplib::Request &, httplib::Response &res) {
             res.set_content(getIPv6Stats(ipv6Stats).dump(), "application/json");
         });
-    svr.Get("/stats/tcp", [](const httplib::Request &, httplib::Response &res) {
+    svr.Get("/api/stats/tcp", [](const httplib::Request &, httplib::Response &res) {
         res.set_content(getTCPStats(tcpStats).dump(), "application/json");
     });
-    svr.Get("/stats/udp", [](const httplib::Request &, httplib::Response &res) {
+    svr.Get("/api/stats/udp", [](const httplib::Request &, httplib::Response &res) {
         res.set_content(getUDPStats(udpStats).dump(), "application/json");
     });
     svr.Get(
-        "/stats/http", [](const httplib::Request &, httplib::Response &res) {
+        "/api/stats/http", [](const httplib::Request &, httplib::Response &res) {
             res.set_content(getHTTPStats(httpStats).dump(), "application/json");
         });
     svr.listen(addr.c_str(), port);

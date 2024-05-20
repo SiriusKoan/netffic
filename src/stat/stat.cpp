@@ -2,6 +2,15 @@
 #include "utils.hpp"
 #include <iostream>
 #include <string>
+#include <vector>
+
+nlohmann::json getMeta() {
+    nlohmann::json j;
+    j["l3"] = std::vector<std::string>{"ipv4", "ipv6"};
+    j["l4"] = std::vector<std::string>{"tcp", "udp"};
+    j["l7"] = std::vector<std::string>{"http"};
+    return j;
+}
 
 nlohmann::json getAllStats(PacketStats &stats) {
     nlohmann::json j;
