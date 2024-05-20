@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+    @apply min-h-[90vh];
+}
+
 h2 {
-    @apply font-bold text-2xl;
+    @apply font-bold text-2xl m-3;
 }
