@@ -1,6 +1,6 @@
 <template>
     <StatsContainer title="Total Stats">
-        <StatViewer title="Total" :value="total" desc="Total number of packets" />
+        <StatViewer title="Total number of packets" :value="total" :desc="last_total ? `+${total - last_total}` : ''" />
     </StatsContainer>
     <StatsContainer title="L3 Stats">
         <StatViewer v-for="(value, key) in l3" :key="key" :title="key" :value="value" :desc="last_l3[key] ? `+${value - last_l3[key]}` : ''" />

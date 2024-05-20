@@ -1,5 +1,5 @@
 <template>
-    <div class="inline-flex bg-opacity-40 bg-white items-center justify-center p-3">
+    <div class="inline-flex bg-opacity-50 bg-white items-center justify-center p-3 rounded">
         <apexchart type="pie" :options="chartOptions" :series="chartSeries" width="500" />
     </div>
 </template>

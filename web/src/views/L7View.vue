@@ -1,6 +1,6 @@
 <template>
     <h2 class="text-center">HTTP</h2>
-    <div class="flex flex-wrap gap-2">
+    <div class="flex flex-wrap gap-2 w-fit">
         <PieChart v-for="(chartOptions, index) in chartOptionses" :key="index" :chartOptions="chartOptions" :chartSeries="chartSerieses[index]" />
     </div>
 </template>
@@ -29,11 +29,11 @@ export default {
                             chart: {
                                 id: field,
                             },
-                            labels: Object.keys(data[field]),
+                            labels: Object.keys(data[field]) || [],
                         };
                     });
                     this.chartSerieses = fields.map(field => {
-                        return Object.values(data[field]);
+                        return Object.values(data[field]) || [];
                     });
                 });
         }, 1000);
