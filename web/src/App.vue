@@ -1,12 +1,14 @@
 <template>
-  <div>
-    <h1 class="text-blue-100">Welcome to my App!</h1>
-    <p>This is the main component of my application.</p>
-  </div>
+  <NavBar />
+  <router-view />
 </template>
 
 <script>
+import NavBar from './components/NavBar.vue'
 export default {
   name: 'App',
+  components: {
+    NavBar
+  }
 }
 </script>
