@@ -30,6 +30,9 @@ export default {
                                 id: field,
                             },
                             labels: Object.keys(data[field]) || [],
+                            title: {
+                                text: field,
+                            },
                         };
                     });
                     this.chartSerieses = fields.map(field => {

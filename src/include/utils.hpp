@@ -29,6 +29,7 @@ class DataPipe {
 
 typedef struct {
     int totalPacketCount;
+    uint64_t totalByteCount;
     // L3
     int arpPacketCount;
     int grePacketCount;

@@ -1,6 +1,7 @@
 <template>
     <StatsContainer title="Total Stats">
-        <StatViewer title="Total number of packets" :value="total" :desc="last_total ? `+${total - last_total}` : ''" />
+        <StatViewer title="Total Packets" :value="total.totalPacketCount" :desc="last_total.totalPacketCount ? `+${total.totalPacketCount - last_total.totalPacketCount}` : ''" />
+        <StatViewer title="Total Bytes" :value="bytesToSize(total.totalByteCount)" :desc="last_total.totalByteCount ? `+${bytesToSize(total.totalByteCount - last_total.totalByteCount)}` : ''" />
     </StatsContainer>
     <StatsContainer title="L3 Stats">
         <StatViewer v-for="(value, key) in l3" :key="key" :title="key" :value="value" :desc="last_l3[key] ? `+${value - last_l3[key]}` : ''" />
@@ -24,14 +25,22 @@ export default {
     },
     data() {
         return {
-            last_total: 0,
-            total: 0,
+            last_total: {},
+            total: {},
             last_l3: {},
             l3: {},
             last_l4: {},
             l4: {},
             last_l7: {},
             l7: {}
+        }
+    },
+    methods: {
+        bytesToSize(bytes) {
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+            if (bytes === 0) return '0 Byte'
+            const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
+            return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i]
         }
     },
     mounted() {
@@ -43,7 +52,7 @@ export default {
                 this.last_l3 = this.l3
                 this.last_l4 = this.l4
                 this.last_l7 = this.l7
-                this.total = data.totalPacketCount
+                this.total = data.total
                 this.l3 = data.l3
                 this.l4 = data.l4
                 this.l7 = data.l7

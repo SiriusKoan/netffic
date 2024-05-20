@@ -14,7 +14,10 @@ nlohmann::json getMeta() {
 
 nlohmann::json getAllStats(PacketStats &stats) {
     nlohmann::json j;
-    j["totalPacketCount"] = stats.totalPacketCount;
+    j["total"] = {
+        {"totalPacketCount", stats.totalPacketCount},
+        {"totalByteCount", stats.totalByteCount},
+    };
     j["l3"] = {
         {"arpPacketCount", stats.arpPacketCount},
         {"grePacketCount", stats.grePacketCount},
@@ -57,11 +60,13 @@ nlohmann::json getTCPStats(TCPStats &stats) {
     nlohmann::json j;
     j["srcPortCounter"] = {};
     for (auto &[key, value] : stats.srcPortCounter) {
-        j["srcPortCounter"][key] = value;
+        std::string port = std::to_string(key);
+        j["srcPortCounter"][port] = value;
     }
     j["dstPortCounter"] = {};
     for (auto &[key, value] : stats.dstPortCounter) {
-        j["dstPortCounter"][key] = value;
+        std::string port = std::to_string(key);
+        j["dstPortCounter"][port] = value;
     }
     return j;
 }
@@ -70,11 +75,13 @@ nlohmann::json getUDPStats(UDPStats &stats) {
     nlohmann::json j;
     j["srcPortCounter"] = {};
     for (auto &[key, value] : stats.srcPortCounter) {
-        j["srcPortCounter"][key] = value;
+        std::string port = std::to_string(key);
+        j["srcPortCounter"][port] = value;
     }
     j["dstPortCounter"] = {};
     for (auto &[key, value] : stats.dstPortCounter) {
-        j["dstPortCounter"][key] = value;
+        std::string port = std::to_string(key);
+        j["dstPortCounter"][port] = value;
     }
     return j;
 }
