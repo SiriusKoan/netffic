@@ -21,7 +21,7 @@ export default {
     props: {
         column1: String,
         column2: String,
-        data: Array
+        data: Object
     }
 }
 </script>
