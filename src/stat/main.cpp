@@ -51,6 +51,7 @@ void receive_data() {
         pcpp::Packet packet(&rawPacket);
         // Increment the corresponding counter
         stats.totalPacketCount++;
+        stats.totalByteCount += rawPacket.getRawDataLen();
         // L3
         if (packet.isPacketOfType(pcpp::ARP)) {
             stats.arpPacketCount++;
@@ -140,9 +141,11 @@ void receive_data() {
                 httpStats.responseCount++;
                 httpStats.statusCounter[httpLayer->getFirstLine()
                                             ->getStatusCode()]++;
-                httpStats.contentTypeCounter
-                    [httpLayer->getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)
-                         ->getFieldValue()]++;
+                if (httpLayer->getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)) {
+                    httpStats.contentTypeCounter
+                        [httpLayer->getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)
+                             ->getFieldValue()]++;
+                }
             }
         }
         if (packet.isPacketOfType(pcpp::NTP)) {
@@ -161,30 +164,48 @@ void receive_data() {
 void http_server(std::string addr, int port) {
     std::cout << "Starting HTTP server on " << addr << ":" << port << std::endl;
     httplib::Server svr;
+    svr.Options("/(.*)", [&](const httplib::Request &, httplib::Response &res) {
+        res.set_header("Access-Control-Allow-Methods", " POST, GET, OPTIONS");
+        res.set_header("Content-Type", "text/html; charset=utf-8");
+        res.set_header("Access-Control-Allow-Headers",
+                       "X-Requested-With, Content-Type, Accept");
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_header("Connection", "close");
+    });
     svr.Get("/api/meta", [](const httplib::Request &, httplib::Response &res) {
+        res.set_header("Access-Control-Allow-Origin", "*");
         res.set_content(getMeta().dump(), "application/json");
     });
-    svr.Get("/api/stats/all", [](const httplib::Request &, httplib::Response &res) {
-        res.set_content(getAllStats(stats).dump(), "application/json");
+    svr.Get("/api/stats/all",
+            [](const httplib::Request &, httplib::Response &res) {
+                res.set_header("Access-Control-Allow-Origin", "*");
+                res.set_content(getAllStats(stats).dump(), "application/json");
+            });
+    svr.Get("/api/stats/ipv4", [](const httplib::Request &,
+                                  httplib::Response &res) {
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_content(getIPv4Stats(ipv4Stats).dump(), "application/json");
+    });
+    svr.Get("/api/stats/ipv6", [](const httplib::Request &,
+                                  httplib::Response &res) {
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_content(getIPv6Stats(ipv6Stats).dump(), "application/json");
     });
     svr.Get(
-        "/api/stats/ipv4", [](const httplib::Request &, httplib::Response &res) {
-            res.set_content(getIPv4Stats(ipv4Stats).dump(), "application/json");
+        "/api/stats/tcp", [](const httplib::Request &, httplib::Response &res) {
+            res.set_header("Access-Control-Allow-Origin", "*");
+            res.set_content(getTCPStats(tcpStats).dump(), "application/json");
         });
     svr.Get(
-        "/api/stats/ipv6", [](const httplib::Request &, httplib::Response &res) {
-            res.set_content(getIPv6Stats(ipv6Stats).dump(), "application/json");
+        "/api/stats/udp", [](const httplib::Request &, httplib::Response &res) {
+            res.set_header("Access-Control-Allow-Origin", "*");
+            res.set_content(getUDPStats(udpStats).dump(), "application/json");
         });
-    svr.Get("/api/stats/tcp", [](const httplib::Request &, httplib::Response &res) {
-        res.set_content(getTCPStats(tcpStats).dump(), "application/json");
+    svr.Get("/api/stats/http", [](const httplib::Request &,
+                                  httplib::Response &res) {
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_content(getHTTPStats(httpStats).dump(), "application/json");
     });
-    svr.Get("/api/stats/udp", [](const httplib::Request &, httplib::Response &res) {
-        res.set_content(getUDPStats(udpStats).dump(), "application/json");
-    });
-    svr.Get(
-        "/api/stats/http", [](const httplib::Request &, httplib::Response &res) {
-            res.set_content(getHTTPStats(httpStats).dump(), "application/json");
-        });
     svr.listen(addr.c_str(), port);
 }
 
